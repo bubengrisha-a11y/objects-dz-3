@@ -84,7 +84,7 @@ Authorization: {{$dotenv OBJECTS_AUTH}}
 
 ### Найти объекты типа: символы шаблона — обычные символы
 # Ожидается: 200; items пуст: % _ [ — обычные символы
-GET {{$dotenv OBJECTS_URL}}/search?type=Справочник._ДемоПартнеры&q=%25_[
+GET {{$dotenv OBJECTS_URL}}/search?type=Справочник._ДемоПартнеры&q=%25_%5B
 Authorization: {{$dotenv OBJECTS_AUTH}}
 
 ### Найти объекты типа: строка из одних пробелов
@@ -95,6 +95,16 @@ Authorization: {{$dotenv OBJECTS_AUTH}}
 ### Найти объекты типа: limit вне 1–100
 # Ожидается: 400, path="limit"
 GET {{$dotenv OBJECTS_URL}}/search?type=Справочник._ДемоПартнеры&q=а&limit=0
+Authorization: {{$dotenv OBJECTS_AUTH}}
+
+### Найти объекты типа: limit больше 100
+# Ожидается: 400, path="limit"
+GET {{$dotenv OBJECTS_URL}}/search?type=Справочник._ДемоПартнеры&q=а&limit=101
+Authorization: {{$dotenv OBJECTS_AUTH}}
+
+### Найти объекты типа: limit не число
+# Ожидается: 400, path="limit"
+GET {{$dotenv OBJECTS_URL}}/search?type=Справочник._ДемоПартнеры&q=а&limit=abc
 Authorization: {{$dotenv OBJECTS_AUTH}}
 
 ### Прочитать объект: элемент справочника
@@ -110,7 +120,7 @@ Authorization: {{$dotenv OBJECTS_AUTH}}
 
 ### Прочитать объект: такого объекта нет
 # Ожидается: 404 not_found
-GET {{$dotenv OBJECTS_URL}}/object?type=Справочник._ДемоПартнеры&id=00000000-0000-0000-0000-000000000000
+GET {{$dotenv OBJECTS_URL}}/object?type=Справочник._ДемоПартнеры&id={{$dotenv MISSING_ID}}
 Authorization: {{$dotenv OBJECTS_AUTH}}
 
 ### Прочитать объект: id не UUID
@@ -216,6 +226,14 @@ Authorization: {{$dotenv OBJECTS_AUTH}}
 Content-Type: application/json
 
 {"type": "Справочник._ДемоПартнеры", "header": {"Наименование": "Партнёр из REST Client", "ВидПартнера": "ЮридическоеЛицо", "ЭтоГруппа": true, "НетТакогоПоля": 1}}
+
+### Создать объект: документ без Даты
+# Ожидается: 400; path "header.Дата"
+POST {{$dotenv OBJECTS_URL}}/object
+Authorization: {{$dotenv OBJECTS_AUTH}}
+Content-Type: application/json
+
+{"type": "Документ._ДемоСчетНаОплатуПокупателю", "header": {"Организация": "{{$dotenv ORGANIZATION_ID}}"}}
 
 ### Создать объект: вид метаданных не поддерживается
 # Ожидается: 400 unsupported_type, path "type"
