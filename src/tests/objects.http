@@ -1,5 +1,4 @@
 # Запросы к сервису objects. Адрес, авторизация и идентификаторы — в .env рядом.
-# Маршрут, обработчик которого ещё не реализован, отвечает 501.
 
 ### Найти тип по слову
 # Ожидается: 200; items содержит {"name": "Документ._ДемоПоступлениеТоваров", "kind": "document"}
@@ -97,9 +96,123 @@ Authorization: {{$dotenv OBJECTS_AUTH}}
 GET {{$dotenv OBJECTS_URL}}/object?type=Справочник._ДемоПартнеры&id=123
 Authorization: {{$dotenv OBJECTS_AUTH}}
 
-### Создать объект — тело запроса задаёт ваша спецификация
+### Создать объект: элемент справочника
+# @name newPartner
+# Ожидается: 201; header.Код назначен 1С; header.ЭтоГруппа=false
 POST {{$dotenv OBJECTS_URL}}/object
 Authorization: {{$dotenv OBJECTS_AUTH}}
 Content-Type: application/json
 
-{}
+{"type": "Справочник._ДемоПартнеры", "header": {"Наименование": "Партнёр из REST Client", "ВидПартнера": "ЮридическоеЛицо", "Клиент": true}}
+
+### Создать объект: счёт на оплату покупателю
+# @name newInvoice
+# Ожидается: 201; header.Проведен=false; header.Номер назначен 1С; tables.Товары[0].Сумма=1000
+POST {{$dotenv OBJECTS_URL}}/object
+Authorization: {{$dotenv OBJECTS_AUTH}}
+Content-Type: application/json
+
+{
+  "type": "Документ._ДемоСчетНаОплатуПокупателю",
+  "header": {
+    "Дата": "2026-11-20T10:00:00",
+    "Организация": "{{$dotenv ORGANIZATION_ID}}",
+    "Партнер": "{{$dotenv PARTNER_ID}}",
+    "Контрагент": "{{$dotenv COUNTERPARTY_ID}}",
+    "Подразделение": "{{$dotenv DEPARTMENT_ID}}",
+    "Ответственный": "{{$dotenv RESPONSIBLE_ID}}",
+    "ВалютаДокумента": "{{$dotenv CURRENCY_ID}}",
+    "Комментарий": "Создан запросом REST Client"
+  },
+  "tables": {
+    "Товары": [
+      {"Номенклатура": "{{$dotenv PRODUCT_ID}}", "Количество": 1, "Цена": 1000, "Сумма": 1000, "Всего": 1000}
+    ]
+  }
+}
+
+### Прочитать созданный счёт
+# Ожидается: 200, те же данные
+GET {{$dotenv OBJECTS_URL}}/object?type=Документ._ДемоСчетНаОплатуПокупателю&id={{newInvoice.response.body.$.id}}
+Authorization: {{$dotenv OBJECTS_AUTH}}
+
+### Создать объект: счёт без обязательной Организации
+# Ожидается: 422 validation_failed; в details есть path "header.Организация"
+POST {{$dotenv OBJECTS_URL}}/object
+Authorization: {{$dotenv OBJECTS_AUTH}}
+Content-Type: application/json
+
+{
+  "type": "Документ._ДемоСчетНаОплатуПокупателю",
+  "header": {
+    "Дата": "2026-11-20T10:00:00",
+    "Партнер": "{{$dotenv PARTNER_ID}}",
+    "Контрагент": "{{$dotenv COUNTERPARTY_ID}}",
+    "Подразделение": "{{$dotenv DEPARTMENT_ID}}",
+    "Ответственный": "{{$dotenv RESPONSIBLE_ID}}",
+    "ВалютаДокумента": "{{$dotenv CURRENCY_ID}}",
+    "Комментарий": "Создан запросом REST Client"
+  },
+  "tables": {
+    "Товары": [
+      {"Номенклатура": "{{$dotenv PRODUCT_ID}}", "Количество": 1, "Цена": 1000, "Сумма": 1000, "Всего": 1000}
+    ]
+  }
+}
+
+### Создать объект: ссылка не того вида (организация вместо партнёра)
+# Ожидается: 400; path "header.Партнер"
+POST {{$dotenv OBJECTS_URL}}/object
+Authorization: {{$dotenv OBJECTS_AUTH}}
+Content-Type: application/json
+
+{
+  "type": "Документ._ДемоСчетНаОплатуПокупателю",
+  "header": {
+    "Дата": "2026-11-20T10:00:00",
+    "Организация": "{{$dotenv ORGANIZATION_ID}}",
+    "Партнер": "{{$dotenv ORGANIZATION_ID}}",
+    "Контрагент": "{{$dotenv COUNTERPARTY_ID}}",
+    "Подразделение": "{{$dotenv DEPARTMENT_ID}}",
+    "Ответственный": "{{$dotenv RESPONSIBLE_ID}}",
+    "ВалютаДокумента": "{{$dotenv CURRENCY_ID}}",
+    "Комментарий": "Создан запросом REST Client"
+  },
+  "tables": {
+    "Товары": [
+      {"Номенклатура": "{{$dotenv PRODUCT_ID}}", "Количество": 1, "Цена": 1000, "Сумма": 1000, "Всего": 1000}
+    ]
+  }
+}
+
+### Создать объект: поле только для чтения и неизвестное поле
+# Ожидается: 400; paths "header.ЭтоГруппа" и "header.НетТакогоПоля"
+POST {{$dotenv OBJECTS_URL}}/object
+Authorization: {{$dotenv OBJECTS_AUTH}}
+Content-Type: application/json
+
+{"type": "Справочник._ДемоПартнеры", "header": {"Наименование": "Партнёр из REST Client", "ВидПартнера": "ЮридическоеЛицо", "ЭтоГруппа": true, "НетТакогоПоля": 1}}
+
+### Создать объект: вид метаданных не поддерживается
+# Ожидается: 400 unsupported_type, path "type"
+POST {{$dotenv OBJECTS_URL}}/object
+Authorization: {{$dotenv OBJECTS_AUTH}}
+Content-Type: application/json
+
+{"type": "РегистрСведений.КурсыВалют", "header": {}}
+
+### Создать объект: хвост после JSON
+# Ожидается: 400 bad_request
+POST {{$dotenv OBJECTS_URL}}/object
+Authorization: {{$dotenv OBJECTS_AUTH}}
+Content-Type: application/json
+
+{"type": "Справочник._ДемоПартнеры", "header": {}} хвост
+
+### Создать объект: тело не JSON по Content-Type
+# Ожидается: 415 unsupported_media_type
+POST {{$dotenv OBJECTS_URL}}/object
+Authorization: {{$dotenv OBJECTS_AUTH}}
+Content-Type: text/plain
+
+{"type": "Справочник._ДемоПартнеры", "header": {}} хвост
