@@ -16,8 +16,39 @@ Authorization: {{$dotenv OBJECTS_AUTH}}
 GET {{$dotenv OBJECTS_URL}}/types?q=%20
 Authorization: {{$dotenv OBJECTS_AUTH}}
 
-### Описать тип
+### Описать тип: справочник с иерархией групп
+# Ожидается: 200; hierarchy="groups"; ВидПартнера: required=true, types[0].kind="enum", values содержит ЮридическоеЛицо; ЭтоГруппа: writable=false; ТЧ ДополнительныеРеквизиты: writable=false; search.field="Наименование"
+GET {{$dotenv OBJECTS_URL}}/type?name=Справочник._ДемоПартнеры
+Authorization: {{$dotenv OBJECTS_AUTH}}
+
+### Описать тип: документ
+# Ожидается: 200; Дата: writable=true, required=true; Номер: writable=false; Партнер: types[0] = {"name": "Справочник._ДемоПартнеры", "kind": "ref", "searchUrl": "/search?type=Справочник._ДемоПартнеры"}; ТЧ Товары: поле Цена required=true; search.field="Номер"
 GET {{$dotenv OBJECTS_URL}}/type?name=Документ._ДемоСчетНаОплатуПокупателю
+Authorization: {{$dotenv OBJECTS_AUTH}}
+
+### Описать тип: вид метаданных не поддерживается
+# Ожидается: 400 unsupported_type
+GET {{$dotenv OBJECTS_URL}}/type?name=РегистрСведений.КурсыВалют
+Authorization: {{$dotenv OBJECTS_AUTH}}
+
+### Описать тип: вид не русским словом
+# Ожидается: 400 unsupported_type
+GET {{$dotenv OBJECTS_URL}}/type?name=Catalog._ДемоПартнеры
+Authorization: {{$dotenv OBJECTS_AUTH}}
+
+### Описать тип: такого типа нет
+# Ожидается: 404 type_not_found
+GET {{$dotenv OBJECTS_URL}}/type?name=Справочник.НетТакогоТипа
+Authorization: {{$dotenv OBJECTS_AUTH}}
+
+### Описать тип: пустое имя после вида
+# Ожидается: 400 bad_request, path="name"
+GET {{$dotenv OBJECTS_URL}}/type?name=Справочник.
+Authorization: {{$dotenv OBJECTS_AUTH}}
+
+### Описать тип: лишняя часть имени
+# Ожидается: 400 bad_request, path="name"
+GET {{$dotenv OBJECTS_URL}}/type?name=Справочник._ДемоПартнеры.Лишнее
 Authorization: {{$dotenv OBJECTS_AUTH}}
 
 ### Найти объекты типа
