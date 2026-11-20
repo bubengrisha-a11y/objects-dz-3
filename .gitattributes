@@ -1,0 +1,3 @@
+# Исходники 1С: UTF-8 с BOM и CRLF, как их выгружает Конфигуратор, — git их не трогает
+src/extensions/** -text
+*.cfe binary
