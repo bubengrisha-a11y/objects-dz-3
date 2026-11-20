@@ -51,8 +51,30 @@ Authorization: {{$dotenv OBJECTS_AUTH}}
 GET {{$dotenv OBJECTS_URL}}/type?name=Справочник._ДемоПартнеры.Лишнее
 Authorization: {{$dotenv OBJECTS_AUTH}}
 
-### Найти объекты типа
+### Найти объекты типа: справочник по наименованию
+# Ожидается: 200; items содержит элемент с id = PARTNER_ID из .env; у элементов есть isFolder
 GET {{$dotenv OBJECTS_URL}}/search?type=Справочник._ДемоПартнеры&q=Альфа
+Authorization: {{$dotenv OBJECTS_AUTH}}
+
+### Найти объекты типа: limit и hasMore
+# Ожидается: 200; один элемент; hasMore=true
+GET {{$dotenv OBJECTS_URL}}/search?type=Справочник._ДемоПартнеры&q=а&limit=1
+Authorization: {{$dotenv OBJECTS_AUTH}}
+
+### Найти объекты типа: документ по номеру
+# @name invoices
+# Ожидается: 200; элементы с number, date, posted; date по убыванию
+GET {{$dotenv OBJECTS_URL}}/search?type=Документ._ДемоСчетНаОплатуПокупателю&q=0
+Authorization: {{$dotenv OBJECTS_AUTH}}
+
+### Найти объекты типа: символы шаблона — обычные символы
+# Ожидается: 200; items пуст: % _ [ — обычные символы
+GET {{$dotenv OBJECTS_URL}}/search?type=Справочник._ДемоПартнеры&q=%25_[
+Authorization: {{$dotenv OBJECTS_AUTH}}
+
+### Найти объекты типа: limit вне 1–100
+# Ожидается: 400, path="limit"
+GET {{$dotenv OBJECTS_URL}}/search?type=Справочник._ДемоПартнеры&q=а&limit=0
 Authorization: {{$dotenv OBJECTS_AUTH}}
 
 ### Прочитать объект
