@@ -1,8 +1,19 @@
 # Запросы к сервису objects. Адрес, авторизация и идентификаторы — в .env рядом.
-# Пока обработчики не реализованы, каждый запрос отвечает 501.
+# Маршрут, обработчик которого ещё не реализован, отвечает 501.
 
 ### Найти тип по слову
-GET {{$dotenv OBJECTS_URL}}/types?q=счет
+# Ожидается: 200; items содержит {"name": "Документ._ДемоПоступлениеТоваров", "kind": "document"}
+GET {{$dotenv OBJECTS_URL}}/types?q=поступление
+Authorization: {{$dotenv OBJECTS_AUTH}}
+
+### Найти тип по слову: регистр и «ё» не важны
+# Ожидается: 200; items содержит Документ._ДемоСчетНаОплатуПокупателю
+GET {{$dotenv OBJECTS_URL}}/types?q=СЧЁТ
+Authorization: {{$dotenv OBJECTS_AUTH}}
+
+### Найти тип по слову: пустое слово
+# Ожидается: 400 bad_request, details[0].path = "q"
+GET {{$dotenv OBJECTS_URL}}/types?q=%20
 Authorization: {{$dotenv OBJECTS_AUTH}}
 
 ### Описать тип
