@@ -1,6 +1,10 @@
 # Запросы к сервису objects. Адрес, авторизация и идентификаторы — в .env рядом.
+# Порядок — как сценарий работы клиента: найти тип → описать → найти объекты → прочитать →
+# создать справочник и документ → ошибки клиента. Запросы с # @name идут раньше тех,
+# что на них ссылаются: выполняйте файл сверху вниз.
 
 ### Найти тип по слову
+# ===== 1. Найти тип по слову: GET /types =====
 # Ожидается: 200; items содержит {"name": "Документ._ДемоПоступлениеТоваров", "kind": "document"}
 GET {{$dotenv OBJECTS_URL}}/types?q=поступление
 Authorization: {{$dotenv OBJECTS_AUTH}}
@@ -15,7 +19,13 @@ Authorization: {{$dotenv OBJECTS_AUTH}}
 GET {{$dotenv OBJECTS_URL}}/types?q=%20
 Authorization: {{$dotenv OBJECTS_AUTH}}
 
+### Найти тип по слову: ничего не найдено
+# Ожидается: 200; items пуст
+GET {{$dotenv OBJECTS_URL}}/types?q=zzzz
+Authorization: {{$dotenv OBJECTS_AUTH}}
+
 ### Описать тип: справочник с иерархией групп
+# ===== 2. Описать тип: GET /type =====
 # Ожидается: 200; hierarchy="groups"; ВидПартнера: required=true, types[0].kind="enum", values содержит ЮридическоеЛицо; ЭтоГруппа: writable=false; ТЧ ДополнительныеРеквизиты: writable=false; search.field="Наименование"
 GET {{$dotenv OBJECTS_URL}}/type?name=Справочник._ДемоПартнеры
 Authorization: {{$dotenv OBJECTS_AUTH}}
@@ -45,12 +55,18 @@ Authorization: {{$dotenv OBJECTS_AUTH}}
 GET {{$dotenv OBJECTS_URL}}/type?name=Справочник.
 Authorization: {{$dotenv OBJECTS_AUTH}}
 
+### Описать тип: имя не передано
+# Ожидается: 400 bad_request, path="name"
+GET {{$dotenv OBJECTS_URL}}/type
+Authorization: {{$dotenv OBJECTS_AUTH}}
+
 ### Описать тип: лишняя часть имени
 # Ожидается: 400 bad_request, path="name"
 GET {{$dotenv OBJECTS_URL}}/type?name=Справочник._ДемоПартнеры.Лишнее
 Authorization: {{$dotenv OBJECTS_AUTH}}
 
 ### Найти объекты типа: справочник по наименованию
+# ===== 3. Найти объекты типа: GET /search =====
 # Ожидается: 200; items содержит элемент с id = PARTNER_ID из .env; у элементов есть isFolder
 GET {{$dotenv OBJECTS_URL}}/search?type=Справочник._ДемоПартнеры&q=Альфа
 Authorization: {{$dotenv OBJECTS_AUTH}}
@@ -71,12 +87,18 @@ Authorization: {{$dotenv OBJECTS_AUTH}}
 GET {{$dotenv OBJECTS_URL}}/search?type=Справочник._ДемоПартнеры&q=%25_[
 Authorization: {{$dotenv OBJECTS_AUTH}}
 
+### Найти объекты типа: строка из одних пробелов
+# Ожидается: 400 bad_request, path="q"
+GET {{$dotenv OBJECTS_URL}}/search?type=Справочник._ДемоПартнеры&q=%20%20
+Authorization: {{$dotenv OBJECTS_AUTH}}
+
 ### Найти объекты типа: limit вне 1–100
 # Ожидается: 400, path="limit"
 GET {{$dotenv OBJECTS_URL}}/search?type=Справочник._ДемоПартнеры&q=а&limit=0
 Authorization: {{$dotenv OBJECTS_AUTH}}
 
 ### Прочитать объект: элемент справочника
+# ===== 4. Прочитать объект: GET /object =====
 # Ожидается: 200; header.ЭтоГруппа=false; header.ВидПартнера — имя значения перечисления; tables.КонтактнаяИнформация и tables.ДополнительныеРеквизиты — массивы; значения неподдерживаемых типов — {"unsupported": true, "presentation": …}
 GET {{$dotenv OBJECTS_URL}}/object?type=Справочник._ДемоПартнеры&id={{$dotenv PARTNER_ID}}
 Authorization: {{$dotenv OBJECTS_AUTH}}
@@ -97,6 +119,7 @@ GET {{$dotenv OBJECTS_URL}}/object?type=Справочник._ДемоПартн
 Authorization: {{$dotenv OBJECTS_AUTH}}
 
 ### Создать объект: элемент справочника
+# ===== 5. Создать справочник и документ: POST /object (счёт — тот же маршрут) =====
 # @name newPartner
 # Ожидается: 201; header.Код назначен 1С; header.ЭтоГруппа=false
 POST {{$dotenv OBJECTS_URL}}/object
@@ -137,6 +160,7 @@ GET {{$dotenv OBJECTS_URL}}/object?type=Документ._ДемоСчетНаО
 Authorization: {{$dotenv OBJECTS_AUTH}}
 
 ### Создать объект: счёт без обязательной Организации
+# ===== 6. Ошибки клиента при создании: POST /object (ошибки остальных маршрутов — в их разделах) =====
 # Ожидается: 422 validation_failed; в details есть path "header.Организация"
 POST {{$dotenv OBJECTS_URL}}/object
 Authorization: {{$dotenv OBJECTS_AUTH}}
