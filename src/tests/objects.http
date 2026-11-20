@@ -77,8 +77,24 @@ Authorization: {{$dotenv OBJECTS_AUTH}}
 GET {{$dotenv OBJECTS_URL}}/search?type=Справочник._ДемоПартнеры&q=а&limit=0
 Authorization: {{$dotenv OBJECTS_AUTH}}
 
-### Прочитать объект
+### Прочитать объект: элемент справочника
+# Ожидается: 200; header.ЭтоГруппа=false; header.ВидПартнера — имя значения перечисления; tables.КонтактнаяИнформация и tables.ДополнительныеРеквизиты — массивы; значения неподдерживаемых типов — {"unsupported": true, "presentation": …}
 GET {{$dotenv OBJECTS_URL}}/object?type=Справочник._ДемоПартнеры&id={{$dotenv PARTNER_ID}}
+Authorization: {{$dotenv OBJECTS_AUTH}}
+
+### Прочитать объект: документ из поиска invoices
+# Ожидается: 200; header.Дата вида YYYY-MM-DDTHH:MM:SS; header.Проведен — булево; tables.Товары — массив строк
+GET {{$dotenv OBJECTS_URL}}/object?type=Документ._ДемоСчетНаОплатуПокупателю&id={{invoices.response.body.$.items[0].id}}
+Authorization: {{$dotenv OBJECTS_AUTH}}
+
+### Прочитать объект: такого объекта нет
+# Ожидается: 404 not_found
+GET {{$dotenv OBJECTS_URL}}/object?type=Справочник._ДемоПартнеры&id=00000000-0000-0000-0000-000000000000
+Authorization: {{$dotenv OBJECTS_AUTH}}
+
+### Прочитать объект: id не UUID
+# Ожидается: 400, path="id"
+GET {{$dotenv OBJECTS_URL}}/object?type=Справочник._ДемоПартнеры&id=123
 Authorization: {{$dotenv OBJECTS_AUTH}}
 
 ### Создать объект — тело запроса задаёт ваша спецификация
