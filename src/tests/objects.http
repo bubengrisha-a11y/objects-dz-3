@@ -2,138 +2,138 @@
 # Порядок — как сценарий работы клиента: найти тип → описать → найти объекты → прочитать →
 # создать справочник и документ → ошибки клиента. Запросы с # @name идут раньше тех,
 # что на них ссылаются: выполняйте файл сверху вниз.
-
+@url = http://localhost/bsp-demo/hs/objects
 ### Найти тип по слову
 # ===== 1. Найти тип по слову: GET /types =====
 # Ожидается: 200; items содержит {"name": "Документ._ДемоПоступлениеТоваров", "kind": "document"}
-GET {{$dotenv OBJECTS_URL}}/types?q=поступление
-Authorization: {{$dotenv OBJECTS_AUTH}}
+GET {{url}}/types?q=поступление
+Authorization: Basic Администратор:
 
 ### Найти тип по слову: регистр и «ё» не важны
 # Ожидается: 200; items содержит Документ._ДемоСчетНаОплатуПокупателю
-GET {{$dotenv OBJECTS_URL}}/types?q=СЧЁТ
-Authorization: {{$dotenv OBJECTS_AUTH}}
+GET {{url}}/types?q=СЧЁТ
+Authorization: Basic Администратор:
 
 ### Найти тип по слову: пустое слово
 # Ожидается: 400 bad_request, details[0].path = "q"
-GET {{$dotenv OBJECTS_URL}}/types?q=%20
-Authorization: {{$dotenv OBJECTS_AUTH}}
+GET {{url}}/types?q=%20
+Authorization: Basic Администратор:
 
 ### Найти тип по слову: ничего не найдено
 # Ожидается: 200; items пуст
-GET {{$dotenv OBJECTS_URL}}/types?q=zzzz
-Authorization: {{$dotenv OBJECTS_AUTH}}
+GET {{url}}/types?q=zzzz
+Authorization: Basic Администратор:
 
 ### Описать тип: справочник с иерархией групп
 # ===== 2. Описать тип: GET /type =====
 # Ожидается: 200; hierarchy="groups"; ВидПартнера: required=true, types[0].kind="enum", values содержит ЮридическоеЛицо; ЭтоГруппа: writable=false; ТЧ ДополнительныеРеквизиты: writable=false; search.field="Наименование"
-GET {{$dotenv OBJECTS_URL}}/type?name=Справочник._ДемоПартнеры
-Authorization: {{$dotenv OBJECTS_AUTH}}
+GET {{url}}/type?name=Справочник._ДемоПартнеры
+Authorization: Basic Администратор:
 
 ### Описать тип: документ
 # Ожидается: 200; Дата: writable=true, required=true; Номер: writable=false; Партнер: types[0] = {"name": "Справочник._ДемоПартнеры", "kind": "ref", "searchUrl": "/search?type=Справочник._ДемоПартнеры"}; ТЧ Товары: поле Цена required=true; search.field="Номер"
-GET {{$dotenv OBJECTS_URL}}/type?name=Документ._ДемоСчетНаОплатуПокупателю
-Authorization: {{$dotenv OBJECTS_AUTH}}
+GET {{url}}/type?name=Документ._ДемоСчетНаОплатуПокупателю
+Authorization: Basic Администратор:
 
 ### Описать тип: вид метаданных не поддерживается
 # Ожидается: 400 unsupported_type
-GET {{$dotenv OBJECTS_URL}}/type?name=РегистрСведений.КурсыВалют
-Authorization: {{$dotenv OBJECTS_AUTH}}
+GET {{url}}/type?name=РегистрСведений.КурсыВалют
+Authorization: Basic Администратор:
 
 ### Описать тип: вид не русским словом
 # Ожидается: 400 unsupported_type
-GET {{$dotenv OBJECTS_URL}}/type?name=Catalog._ДемоПартнеры
-Authorization: {{$dotenv OBJECTS_AUTH}}
+GET {{url}}/type?name=Catalog._ДемоПартнеры
+Authorization: Basic Администратор:
 
 ### Описать тип: такого типа нет
 # Ожидается: 404 type_not_found
-GET {{$dotenv OBJECTS_URL}}/type?name=Справочник.НетТакогоТипа
-Authorization: {{$dotenv OBJECTS_AUTH}}
+GET {{url}}/type?name=Справочник.НетТакогоТипа
+Authorization: Basic Администратор:
 
 ### Описать тип: пустое имя после вида
 # Ожидается: 400 bad_request, path="name"
-GET {{$dotenv OBJECTS_URL}}/type?name=Справочник.
-Authorization: {{$dotenv OBJECTS_AUTH}}
+GET {{url}}/type?name=Справочник.
+Authorization: Basic Администратор:
 
 ### Описать тип: имя не передано
 # Ожидается: 400 bad_request, path="name"
-GET {{$dotenv OBJECTS_URL}}/type
-Authorization: {{$dotenv OBJECTS_AUTH}}
+GET {{url}}/type
+Authorization: Basic Администратор:
 
 ### Описать тип: лишняя часть имени
 # Ожидается: 400 bad_request, path="name"
-GET {{$dotenv OBJECTS_URL}}/type?name=Справочник._ДемоПартнеры.Лишнее
-Authorization: {{$dotenv OBJECTS_AUTH}}
+GET {{url}}/type?name=Справочник._ДемоПартнеры.Лишнее
+Authorization: Basic Администратор:
 
 ### Найти объекты типа: справочник по наименованию
 # ===== 3. Найти объекты типа: GET /search =====
 # Ожидается: 200; items содержит элемент с id = PARTNER_ID из .env; у элементов есть isFolder
-GET {{$dotenv OBJECTS_URL}}/search?type=Справочник._ДемоПартнеры&q=Альфа
-Authorization: {{$dotenv OBJECTS_AUTH}}
+GET {{url}}/search?type=Справочник._ДемоПартнеры&q=Альфа
+Authorization: Basic Администратор:
 
 ### Найти объекты типа: limit и hasMore
 # Ожидается: 200; один элемент; hasMore=true
-GET {{$dotenv OBJECTS_URL}}/search?type=Справочник._ДемоПартнеры&q=а&limit=1
-Authorization: {{$dotenv OBJECTS_AUTH}}
+GET {{url}}/search?type=Справочник._ДемоПартнеры&q=а&limit=1
+Authorization: Basic Администратор:
 
 ### Найти объекты типа: документ по номеру
 # @name invoices
 # Ожидается: 200; элементы с number, date, posted; date по убыванию
-GET {{$dotenv OBJECTS_URL}}/search?type=Документ._ДемоСчетНаОплатуПокупателю&q=0
-Authorization: {{$dotenv OBJECTS_AUTH}}
+GET {{url}}/search?type=Документ._ДемоСчетНаОплатуПокупателю&q=0
+Authorization: Basic Администратор:
 
 ### Найти объекты типа: символы шаблона — обычные символы
 # Ожидается: 200; items пуст: % _ [ — обычные символы
-GET {{$dotenv OBJECTS_URL}}/search?type=Справочник._ДемоПартнеры&q=%25_%5B
-Authorization: {{$dotenv OBJECTS_AUTH}}
+GET {{url}}/search?type=Справочник._ДемоПартнеры&q=%25_%5B
+Authorization: Basic Администратор:
 
 ### Найти объекты типа: строка из одних пробелов
 # Ожидается: 400 bad_request, path="q"
-GET {{$dotenv OBJECTS_URL}}/search?type=Справочник._ДемоПартнеры&q=%20%20
-Authorization: {{$dotenv OBJECTS_AUTH}}
+GET {{url}}/search?type=Справочник._ДемоПартнеры&q=%20%20
+Authorization: Basic Администратор:
 
 ### Найти объекты типа: limit вне 1–100
 # Ожидается: 400, path="limit"
-GET {{$dotenv OBJECTS_URL}}/search?type=Справочник._ДемоПартнеры&q=а&limit=0
-Authorization: {{$dotenv OBJECTS_AUTH}}
+GET {{url}}/search?type=Справочник._ДемоПартнеры&q=а&limit=0
+Authorization: Basic Администратор:
 
 ### Найти объекты типа: limit больше 100
 # Ожидается: 400, path="limit"
-GET {{$dotenv OBJECTS_URL}}/search?type=Справочник._ДемоПартнеры&q=а&limit=101
-Authorization: {{$dotenv OBJECTS_AUTH}}
+GET {{url}}/search?type=Справочник._ДемоПартнеры&q=а&limit=101
+Authorization: Basic Администратор:
 
 ### Найти объекты типа: limit не число
 # Ожидается: 400, path="limit"
-GET {{$dotenv OBJECTS_URL}}/search?type=Справочник._ДемоПартнеры&q=а&limit=abc
-Authorization: {{$dotenv OBJECTS_AUTH}}
+GET {{url}}/search?type=Справочник._ДемоПартнеры&q=а&limit=abc
+Authorization: Basic Администратор:
 
 ### Прочитать объект: элемент справочника
 # ===== 4. Прочитать объект: GET /object =====
 # Ожидается: 200; header.ЭтоГруппа=false; header.ВидПартнера — имя значения перечисления; tables.КонтактнаяИнформация и tables.ДополнительныеРеквизиты — массивы; значения неподдерживаемых типов — {"unsupported": true, "presentation": …}
-GET {{$dotenv OBJECTS_URL}}/object?type=Справочник._ДемоПартнеры&id={{$dotenv PARTNER_ID}}
-Authorization: {{$dotenv OBJECTS_AUTH}}
+GET {{url}}/object?type=Справочник._ДемоПартнеры&id={{$dotenv PARTNER_ID}}
+Authorization: Basic Администратор:
 
 ### Прочитать объект: документ из поиска invoices
 # Ожидается: 200; header.Дата вида YYYY-MM-DDTHH:MM:SS; header.Проведен — булево; tables.Товары — массив строк
-GET {{$dotenv OBJECTS_URL}}/object?type=Документ._ДемоСчетНаОплатуПокупателю&id={{invoices.response.body.$.items[0].id}}
-Authorization: {{$dotenv OBJECTS_AUTH}}
+GET {{url}}/object?type=Документ._ДемоСчетНаОплатуПокупателю&id={{invoices.response.body.$.items[0].id}}
+Authorization: Basic Администратор:
 
 ### Прочитать объект: такого объекта нет
 # Ожидается: 404 not_found
-GET {{$dotenv OBJECTS_URL}}/object?type=Справочник._ДемоПартнеры&id={{$dotenv MISSING_ID}}
-Authorization: {{$dotenv OBJECTS_AUTH}}
+GET {{url}}/object?type=Справочник._ДемоПартнеры&id={{$dotenv MISSING_ID}}
+Authorization: Basic Администратор:
 
 ### Прочитать объект: id не UUID
 # Ожидается: 400, path="id"
-GET {{$dotenv OBJECTS_URL}}/object?type=Справочник._ДемоПартнеры&id=123
-Authorization: {{$dotenv OBJECTS_AUTH}}
+GET {{url}}/object?type=Справочник._ДемоПартнеры&id=123
+Authorization: Basic Администратор:
 
 ### Создать объект: элемент справочника
 # ===== 5. Создать справочник и документ: POST /object (счёт — тот же маршрут) =====
 # @name newPartner
 # Ожидается: 201; header.Код назначен 1С; header.ЭтоГруппа=false
-POST {{$dotenv OBJECTS_URL}}/object
-Authorization: {{$dotenv OBJECTS_AUTH}}
+POST {{url}}/object
+Authorization: Basic Администратор:
 Content-Type: application/json
 
 {"type": "Справочник._ДемоПартнеры", "header": {"Наименование": "Партнёр из REST Client", "ВидПартнера": "ЮридическоеЛицо", "Клиент": true}}
@@ -141,8 +141,8 @@ Content-Type: application/json
 ### Создать объект: счёт на оплату покупателю
 # @name newInvoice
 # Ожидается: 201; header.Проведен=false; header.Номер назначен 1С; tables.Товары[0].Сумма=1000
-POST {{$dotenv OBJECTS_URL}}/object
-Authorization: {{$dotenv OBJECTS_AUTH}}
+POST {{url}}/object
+Authorization: Basic Администратор:
 Content-Type: application/json
 
 {
@@ -166,14 +166,14 @@ Content-Type: application/json
 
 ### Прочитать созданный счёт
 # Ожидается: 200, те же данные
-GET {{$dotenv OBJECTS_URL}}/object?type=Документ._ДемоСчетНаОплатуПокупателю&id={{newInvoice.response.body.$.id}}
-Authorization: {{$dotenv OBJECTS_AUTH}}
+GET {{url}}/object?type=Документ._ДемоСчетНаОплатуПокупателю&id={{newInvoice.response.body.$.id}}
+Authorization: Basic Администратор:
 
 ### Создать объект: счёт без обязательной Организации
 # ===== 6. Ошибки клиента при создании: POST /object (ошибки остальных маршрутов — в их разделах) =====
 # Ожидается: 422 validation_failed; в details есть path "header.Организация"
-POST {{$dotenv OBJECTS_URL}}/object
-Authorization: {{$dotenv OBJECTS_AUTH}}
+POST {{url}}/object
+Authorization: Basic Администратор:
 Content-Type: application/json
 
 {
@@ -196,8 +196,8 @@ Content-Type: application/json
 
 ### Создать объект: ссылка не того вида (организация вместо партнёра)
 # Ожидается: 400; path "header.Партнер"
-POST {{$dotenv OBJECTS_URL}}/object
-Authorization: {{$dotenv OBJECTS_AUTH}}
+POST {{url}}/object
+Authorization: Basic Администратор:
 Content-Type: application/json
 
 {
@@ -221,40 +221,40 @@ Content-Type: application/json
 
 ### Создать объект: поле только для чтения и неизвестное поле
 # Ожидается: 400; paths "header.ЭтоГруппа" и "header.НетТакогоПоля"
-POST {{$dotenv OBJECTS_URL}}/object
-Authorization: {{$dotenv OBJECTS_AUTH}}
+POST {{url}}/object
+Authorization: Basic Администратор:
 Content-Type: application/json
 
 {"type": "Справочник._ДемоПартнеры", "header": {"Наименование": "Партнёр из REST Client", "ВидПартнера": "ЮридическоеЛицо", "ЭтоГруппа": true, "НетТакогоПоля": 1}}
 
 ### Создать объект: документ без Даты
 # Ожидается: 400; path "header.Дата"
-POST {{$dotenv OBJECTS_URL}}/object
-Authorization: {{$dotenv OBJECTS_AUTH}}
+POST {{url}}/object
+Authorization: Basic Администратор:
 Content-Type: application/json
 
 {"type": "Документ._ДемоСчетНаОплатуПокупателю", "header": {"Организация": "{{$dotenv ORGANIZATION_ID}}"}}
 
 ### Создать объект: вид метаданных не поддерживается
 # Ожидается: 400 unsupported_type, path "type"
-POST {{$dotenv OBJECTS_URL}}/object
-Authorization: {{$dotenv OBJECTS_AUTH}}
+POST {{url}}/object
+Authorization: Basic Администратор:
 Content-Type: application/json
 
 {"type": "РегистрСведений.КурсыВалют", "header": {}}
 
 ### Создать объект: хвост после JSON
 # Ожидается: 400 bad_request
-POST {{$dotenv OBJECTS_URL}}/object
-Authorization: {{$dotenv OBJECTS_AUTH}}
+POST {{url}}/object
+Authorization: Basic Администратор:
 Content-Type: application/json
 
 {"type": "Справочник._ДемоПартнеры", "header": {}} хвост
 
 ### Создать объект: тело не JSON по Content-Type
 # Ожидается: 415 unsupported_media_type
-POST {{$dotenv OBJECTS_URL}}/object
-Authorization: {{$dotenv OBJECTS_AUTH}}
+POST {{url}}/object
+Authorization: Basic Администратор:
 Content-Type: text/plain
 
 {"type": "Справочник._ДемоПартнеры", "header": {}} хвост
